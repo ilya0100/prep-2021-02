@@ -1,0 +1,29 @@
+image: leshiy1295/gcc_linters
+
+variables:
+  BIN_NAME: main.out
+
+stages:
+  - check
+  - build
+  - test
+
+check:
+  stage: check
+  script:
+    - make check
+
+build:
+  stage: build
+  script: 
+    - make build
+  artifacts:
+    paths:
+      - ${BIN_NAME}
+
+test:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - make test

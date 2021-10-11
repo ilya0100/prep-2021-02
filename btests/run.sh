@@ -16,8 +16,9 @@ BLACKRECORDS_F_NAME="blackrecord.dat"
 function check_mem() {
 	RECEIVED=$(echo "${1}" | eval "valgrind --tool=memcheck --leak-check=summary --log-file=${VALGRIND_LOG} ${PROG_PATH}")
 
+	NO_LOST=$(grep "${NO_LOST_PATTERN}" ${VALGRIND_LOG})
 	NO_ERROR=$(grep "${NO_ERROR_PATTERN}" ${VALGRIND_LOG})
-	if [ -z "${NO_ERROR}" ]; then
+	if [ -z "${NO_LOST}" ] || [ -z "${NO_ERROR}" ]; then
 		echo -e "TEST ${test} FAILED\n"
 
 		cat ${VALGRIND_LOG}

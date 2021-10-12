@@ -1,4 +1,6 @@
 #include "utils.h"
+#include "is_prime.h"
+#include "series_of_numbers.h"
 
 #define ERR_ARGS_COUNT (-1)
 #define ERR_WRONG_FLG (-2)

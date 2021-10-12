@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "is_prime.h"
 
 int is_prime(int number) {
     if (number <= 1) {

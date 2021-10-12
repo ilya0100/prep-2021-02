@@ -1,4 +1,4 @@
-#include "utils.h"
+#include "series_of_numbers.h"
 
 void series_of_num(int number) {
     if (number > 1) {

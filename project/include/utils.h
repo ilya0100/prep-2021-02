@@ -1,10 +1,14 @@
-#ifndef UTILS_H
-#define UTILS_H
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#ifndef PROJECT_INCLUDE_UTILS_H_
+#define PROJECT_INCLUDE_UTILS_H_
 
 
-size_t timer_from(unsigned char from);
-// TODO: Implement `power of` function
-// int custom_pow(int base, int power);
+size_t timer_from(int from);
+// TODO(ilya): Implement `power of` function
+int custom_pow(int base, int power);
+int is_prime(int number);
+void series_of_num(int number);
 
-#endif //UTILS_H
-
+#endif  // PROJECT_INCLUDE_UTILS_H_

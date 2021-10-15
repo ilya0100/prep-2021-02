@@ -10,8 +10,6 @@ size_t timer_from(int from) {
     return counter;
 }
 
-// TODO(ilya): Implement `power of` function
-
 int custom_pow(int base, int power) {
     if (base == 0) {
         return 0;

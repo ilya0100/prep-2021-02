@@ -3,6 +3,6 @@
 
 #include <stdio.h>
 
-void series_of_num(int number);
+void series_of_numbers(int number);
 
 #endif  // PROJECT_INCLUDE_SERIES_OF_NUMBERS_H_

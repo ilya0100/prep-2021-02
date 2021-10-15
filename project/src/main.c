@@ -31,8 +31,7 @@ int main(int argc, const char** argv) {
             if (argc == 4) {
                 int base = atoi(data);
                 int pow = atoi(argv[3]);
-                int res = custom_pow(base, pow);
-                printf("%d\n", res);
+                printf("%d\n", custom_pow(base, pow));
             } else {
                 return ERR_ARGS_COUNT;
             }
@@ -40,13 +39,12 @@ int main(int argc, const char** argv) {
         }
         case TST_MOD_IMPL: {
             int num = atoi(data);
-            int res = is_prime(num);
-            printf("%d\n", res);
+            printf("%d\n", is_prime(num));
             break;
         }
         case TST_ROW_IMPL: {
             int num = atoi(data);
-            series_of_num(num);
+            series_of_numbers(num);
             break;
         }
         default: {

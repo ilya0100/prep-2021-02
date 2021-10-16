@@ -24,7 +24,6 @@ function check_mem() {
 		cat ${VALGRIND_LOG}
 		echo -e "\n\nRUN: valgrind --tool=memcheck --leak-check=full ./main.out\n\n"
 
-		rm -rf ${VALGRIND_LOG}
 		exit 1
 	fi
 }
@@ -54,7 +53,7 @@ tel_2
 if [[ ${2} == ${CHECK_MEM_ARG} ]]; then
 	check_mem "${IN}"
 else
-	echo "${IN}" | eval "${PROG_PATH}"	
+	echo "${IN}" | eval "${PROG_PATH}"
 fi
 
 IN="2
@@ -66,7 +65,7 @@ IN="2
 if [[ ${2} == ${CHECK_MEM_ARG} ]]; then
 	check_mem "${IN}"
 else
-	echo "${IN}" | eval "${PROG_PATH}"	
+	echo "${IN}" | eval "${PROG_PATH}"
 fi
 
 IN="3"
@@ -74,7 +73,7 @@ IN="3"
 if [[ ${2} == ${CHECK_MEM_ARG} ]]; then
 	check_mem "${IN}"
 else
-	echo "${IN}" | eval "${PROG_PATH}"	
+	echo "${IN}" | eval "${PROG_PATH}"
 fi
 
 for file in $RECORDS_F_NAME $TRANSACTIONS_F_NAME $BLACKRECORDS_F_NAME; do

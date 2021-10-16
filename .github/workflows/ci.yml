@@ -5,14 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     container: leshiy1295/gcc_linters_valgrind
     steps:
-      - uses: actions/checkout@v2 
+      - uses: actions/checkout@v2
       - run: make check
   build:
     runs-on: ubuntu-latest
     container: leshiy1295/gcc_linters_valgrind
     needs: [check]
     steps:
-    - uses: actions/checkout@v2 
+    - uses: actions/checkout@v2
     - run: make build
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
@@ -23,12 +23,17 @@ jobs:
     container: leshiy1295/gcc_linters_valgrind
     needs: [build]
     steps:
-      - uses: actions/checkout@v2 
+      - uses: actions/checkout@v2
       - run: make test
   memtest:
     runs-on: ubuntu-latest
     container: leshiy1295/gcc_linters_valgrind
     needs: [test]
     steps:
-      - uses: actions/checkout@v2 
+      - uses: actions/checkout@v2
       - run: make memtest
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          path: valgrind.log

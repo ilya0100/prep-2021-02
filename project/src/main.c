@@ -44,7 +44,7 @@ int main(int argc, const char** argv) {
         }
         case TST_ROW_IMPL: {
             int num = atoi(data);
-            series_of_numbers(num);
+            print_series_of_numbers(num);
             break;
         }
         default: {

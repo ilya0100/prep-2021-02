@@ -1,6 +1,6 @@
 #include "prime.h"
 
-int is_prime(int number) {
+int is_prime(const int number) {
     if (number <= 1) {
         return 0;
     }

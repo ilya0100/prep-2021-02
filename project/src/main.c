@@ -30,11 +30,10 @@ int main(void) {
 				Ptr = fopen("record.dat", "r");
 				Ptr_2 = fopen("transaction.dat", "r");
 				blackrecord = fopen("blackrecord.dat", "w");
-				if(Ptr == NULL && Ptr_2 == NULL && blackRecord == NULL) {
+				if (Ptr == NULL || Ptr_2 == NULL || blackrecord == NULL) {
 					puts("exit");
 				} else {
 					blackRecord(Ptr, Ptr_2, blackrecord, client_data, transfer);
-					free(Ptr);
 					fclose(Ptr);
 					fclose(Ptr_2);
 					fclose(blackrecord);

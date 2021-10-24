@@ -4,14 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FILENAME "transaction.dat"
-
 typedef struct Data {
-	int Number;
-	char Name[20];
-	char Surname[20];
+	int number;
+	char name[20];
+	char surname[20];
 	char addres[30];
-	char TelNumber[15];
+	char tel_number[15];
 	double indebtedness;
 	double credit_limit;
 	double cash_payments;

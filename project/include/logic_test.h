@@ -3,8 +3,8 @@
 
 #include "utils.h"
 
-void write_data_to_file(FILE *ofPTR, Data Client);
-void transaction_write(FILE *ofPTR, Data transfer);
-void write_transfer_to_file(FILE *ofPTR, FILE *ofPTR_2, FILE *blackrecord, Data client_data, Data transfer);
+void write_data_to_file();
+void transaction_write();
+void write_transfer_to_file();
 
 #endif  // PROJECT_INCLUDE_LOGIC_TEST_H_

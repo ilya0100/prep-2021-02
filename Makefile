@@ -12,7 +12,7 @@ TEST_SRCS = \
 
 .PHONY: all build rebuild check test memtest clean
 
-all: clean check test memtest
+all: clean check test memtest rectest
 
 $(TARGET): $(SRCS) 
 	$(CC) -Wpedantic -Wall -Wextra -Werror -I $(HDRS_DIR) -o $(TARGET) $(CFLAGS) $(SRCS)
@@ -37,4 +37,4 @@ rectest: $(TEST_TARGET)
 	./test_main.out
 
 clean:
-	rm -rf $(TARGET) $(TEST_TARGET)
+	rm -rf $(TARGET) $(TEST_TARGET) *.dat

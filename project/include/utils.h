@@ -6,7 +6,7 @@
 
 #define FILENAME "transaction.dat"
 
-typedef struct masterRecord {
+typedef struct Data {
 	int Number;
 	char Name[20];
 	char Surname[20];
@@ -16,9 +16,5 @@ typedef struct masterRecord {
 	double credit_limit;
 	double cash_payments;
 } Data;
-
-void masterWrite(FILE *ofPTR, Data Client);
-void transactionWrite(FILE *ofPTR, Data transfer);
-void blackRecord(FILE *ofPTR, FILE *ofPTR_2, FILE *blackrecord, Data client_data, Data transfer);
 
 #endif  // PROJECT_INCLUDE_UTILS_H_

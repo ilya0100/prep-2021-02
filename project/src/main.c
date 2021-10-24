@@ -1,4 +1,5 @@
-#include"utils.h"
+#include "utils.h"
+#include "logic_test.h"
 
 
 int main(void) {

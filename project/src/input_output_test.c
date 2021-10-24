@@ -1,6 +1,6 @@
-#include "main_module.h"
+#include "input_output_test.h"
 
-void write_to_file(FILE *ofPtr, struct some *data) {
+void write_to_file(FILE *ofPtr, Data *data) {
     fprintf(ofPtr, "%-12d%-11s%-11s%-16s%20s%12.2f%12.2f%12.2f\n",
 		data->Number,
 		data->Name,
@@ -12,7 +12,7 @@ void write_to_file(FILE *ofPtr, struct some *data) {
 		data->cash_payments);
 }
 
-void read_from_file(FILE *ofPtr, struct some *data) {
+void read_from_file(FILE *ofPtr, Data *data) {
 	fscanf(ofPtr, "%12d%11s%11s%16s%20s%12lf%12lf%12lf",
 		&data->Number,
 		data->Name,
@@ -23,3 +23,4 @@ void read_from_file(FILE *ofPtr, struct some *data) {
 		&data->credit_limit,
 		&data->cash_payments);
 }
+

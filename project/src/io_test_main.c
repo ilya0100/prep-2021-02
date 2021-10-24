@@ -1,4 +1,4 @@
-#include "main_module.h"
+#include "input_output_test.h"
 
 int main() {
 	const char *filename = "test_file.dat";
@@ -7,7 +7,7 @@ int main() {
 	if (Ptr == NULL) {
 		puts("ERROR!");
 	} else {
-		struct some expected_data = {
+		Data expected_data = {
         	.Number = 1,
         	.Name = "ivan",
         	.Surname = "ivanov",
@@ -19,7 +19,7 @@ int main() {
     	};
 		write_to_file(Ptr, &expected_data);
 		rewind(Ptr);
-		struct some got_data = {0};
+		Data got_data = {0};
 		read_from_file(Ptr, &got_data);
 		if (expected_data.Number == got_data.Number &&
 			strcmp(expected_data.Name, got_data.Name) == 0 &&
@@ -29,9 +29,10 @@ int main() {
 			expected_data.indebtedness == got_data.indebtedness &&
 			expected_data.credit_limit == got_data.credit_limit &&
 			expected_data.cash_payments == got_data.cash_payments) {
-				printf("%s\n", "TEST SUCCEED");
+			printf("%s\n", "TEST SUCCEED");
 		} else {
 			printf("%s\n", "TEST FAILED");
 		}
 	}
+	return 0;
 }

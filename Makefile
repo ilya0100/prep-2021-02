@@ -4,11 +4,11 @@ HDRS_DIR = project/include
 
 SRCS = \
 		project/src/main.c \
-		project/src/utils.c 
+		project/src/logic_test.c 
 
 TEST_SRCS = \
-		project/src/main_module.c \
-		project/src/test_utils.c
+		project/src/io_test_main.c \
+		project/src/input_output_test.c
 
 .PHONY: all build rebuild check test memtest clean
 

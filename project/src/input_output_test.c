@@ -12,8 +12,8 @@ void write_to_file(FILE *datafile, Data *data) {
 		data->cash_payments);
 }
 
-void read_from_file(FILE *datafile, Data *data) {
-	fscanf(datafile, "%12d%11s%11s%16s%20s%12lf%12lf%12lf",
+int read_from_file(FILE *datafile, Data *data) {
+	return fscanf(datafile, "%12d%11s%11s%16s%20s%12lf%12lf%12lf",
 		&data->number,
 		data->name,
 		data->surname,

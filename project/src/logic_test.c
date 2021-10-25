@@ -1,7 +1,7 @@
 #include "input_output_test.c"
 #include "logic_test.h"
 
-#define OUTPUT_MESSAGE \
+#define PRINT_OUTPUT_MESSAGE() printf("%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n", \
 	"1 Number account: ", \
 	"2 Client name: ", \
 	"3 Surname: ", \
@@ -9,35 +9,26 @@
 	"5 Client Telnum: ", \
 	"6 Client indebtedness: ", \
 	"7 Client credit limit: ", \
-	"8 Client cash payments: "
-#define SCAN_STRUCTURE \
-	&client.number, \
-	client.name, \
-	client.surname, \
-	client.addres, \
-	client.tel_number, \
-	&client.indebtedness, \
-	&client.credit_limit, \
-	&client.cash_payments
+	"8 Client cash payments: ")
 
-void write_data_to_file() {
+void write_data_to_file(const char *filename) {
 	Data client = {0};
-	FILE *Ptr = fopen("record.dat", "r+");
+	FILE *Ptr = fopen(filename, "r+");
 	if(Ptr == NULL) {
 		puts("Not acess");
 	} else {
-		printf("%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n", OUTPUT_MESSAGE);
-		while(scanf("%12d%11s%11s%16s%20s%12lf%12lf%12lf", SCAN_STRUCTURE) != -1) {
+		PRINT_OUTPUT_MESSAGE();
+		while(read_from_file(stdin, &client) != -1) {
 			write_to_file(Ptr, &client);
-			printf("%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n", OUTPUT_MESSAGE);
+			PRINT_OUTPUT_MESSAGE();
 		}
 		fclose(Ptr);
 	}
 }
 
-void transaction_write() {
+void transaction_write(const char *filename) {
 	Data transfer = {0};
-	FILE *Ptr = fopen("transaction.dat", "r+");
+	FILE *Ptr = fopen(filename, "r+");
 	if(Ptr == NULL) {
 		puts("Not acess");
 	} else {
@@ -54,12 +45,14 @@ void transaction_write() {
 	}
 }
 
-void write_transfer_to_file() {
+void write_transfer_to_file(const char *client_filename,
+	const char *transaction_filename,
+	const char *blackrecord_filename) {
 	Data client = {0}, transfer = {0};
 	FILE *Ptr, *Ptr_2, *blackrecord;
-	Ptr = fopen("record.dat", "r");
-	Ptr_2 = fopen("transaction.dat", "r");
-	blackrecord = fopen("blackrecord.dat", "w");
+	Ptr = fopen(client_filename, "r");
+	Ptr_2 = fopen(transaction_filename, "r");
+	blackrecord = fopen(blackrecord_filename, "w");
 	if (Ptr == NULL) {
 		puts("exit");
 		fclose(Ptr_2);
@@ -73,7 +66,7 @@ void write_transfer_to_file() {
 		fclose(Ptr);
 		fclose(Ptr_2);
 	} else {
-		while (fscanf(Ptr, "%12d%11s%11s%16s%20s%12lf%12lf%12lf", SCAN_STRUCTURE) != -1) {
+		while (read_from_file(Ptr, &client) != -1) {
 			while (fscanf(Ptr_2, "%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
 				if (client.number == transfer.number && transfer.cash_payments != 0) {
 					client.credit_limit += transfer.cash_payments;

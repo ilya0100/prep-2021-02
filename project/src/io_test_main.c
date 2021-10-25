@@ -13,20 +13,12 @@ int main() {
     	.cash_payments = 35
     };
 	FILE *datafile = fopen(filename , "w");
-	if (datafile == NULL) {
-		puts("ERROR!");
-	} else {
-		write_to_file(datafile, &expected_data);
-		fclose(datafile);
-	}
+	write_to_file(datafile, &expected_data);
+	fclose(datafile);
 	Data got_data = {0};
 	datafile = fopen(filename , "r");
-	if (datafile == NULL) {
-		puts("ERROR!");
-	} else {
-		read_from_file(datafile, &got_data);
-		fclose(datafile);
-	}
+	read_from_file(datafile, &got_data);
+	fclose(datafile);
 	if (expected_data.number == got_data.number &&
 		!strcmp(expected_data.name, got_data.name) &&
 		!strcmp(expected_data.surname, got_data.surname) &&

@@ -16,7 +16,7 @@ void write_data_to_file(const char *filename) {
 	Data client = {0};
 	FILE *fd_of_filename = fopen(filename, "r+");
 	if(fd_of_filename == NULL) {
-		puts("Not acess");
+		puts("Not access");
 	} else {
 		PRINT_OUTPUT_MESSAGE();
 		while(read_from_file(stdin, &client) != -1) {
@@ -31,7 +31,7 @@ void transaction_write(const char *filename) {
 	Data transfer = {0};
 	FILE *fd_of_filename = fopen(filename, "r+");
 	if(fd_of_filename == NULL) {
-		puts("Not acess");
+		puts("Not access");
 	} else {
 		PRINT_INPUT_FIELD();
 		while (scanf("%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
@@ -53,26 +53,30 @@ void write_transfer_to_file(const char *client_filename,
 		puts("exit");
 		fclose(fd_of_transaction_file);
 		fclose(fd_of_blackrecord);
-	} else if (fd_of_transaction_file == NULL) {
-		puts("exit");
-		fclose(fd_of_client_file);
-		fclose(fd_of_blackrecord);
-	} else if (fd_of_blackrecord == NULL) {
-		puts("exit");
-		fclose(fd_of_client_file);
-		fclose(fd_of_transaction_file);
-	} else {
-		while (read_from_file(fd_of_client_file, &client) != -1) {
-			while (fscanf(fd_of_transaction_file, "%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
-				if (client.number == transfer.number && transfer.cash_payments != 0) {
-					client.credit_limit += transfer.cash_payments;
-				}
-			}
-			write_to_file(fd_of_blackrecord, &client);
-			rewind(fd_of_transaction_file);
-		}
-		fclose(fd_of_client_file);
-		fclose(fd_of_transaction_file);
-		fclose(fd_of_blackrecord);
+		return;
 	}
+	if (fd_of_transaction_file == NULL) {
+		puts("exit");
+		fclose(fd_of_client_file);
+		fclose(fd_of_blackrecord);
+		return;
+	}
+	if (fd_of_blackrecord == NULL) {
+		puts("exit");
+		fclose(fd_of_client_file);
+		fclose(fd_of_transaction_file);
+		return;
+	}
+	while (read_from_file(fd_of_client_file, &client) != -1) {
+		while (fscanf(fd_of_transaction_file, "%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
+			if (client.number == transfer.number && transfer.cash_payments != 0) {
+				client.credit_limit += transfer.cash_payments;
+			}
+		}
+		write_to_file(fd_of_blackrecord, &client);
+		rewind(fd_of_transaction_file);
+	}
+	fclose(fd_of_client_file);
+	fclose(fd_of_transaction_file);
+	fclose(fd_of_blackrecord);
 }

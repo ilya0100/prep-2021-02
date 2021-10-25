@@ -10,38 +10,35 @@
 	"6 Client indebtedness: ", \
 	"7 Client credit limit: ", \
 	"8 Client cash payments: ")
+#define PRINT_INPUT_FIELD() printf("%s\n%s\n", "1 Number account: ", "2 Client cash payments: ")
 
 void write_data_to_file(const char *filename) {
 	Data client = {0};
-	FILE *Ptr = fopen(filename, "r+");
-	if(Ptr == NULL) {
+	FILE *fd_of_filename = fopen(filename, "r+");
+	if(fd_of_filename == NULL) {
 		puts("Not acess");
 	} else {
 		PRINT_OUTPUT_MESSAGE();
 		while(read_from_file(stdin, &client) != -1) {
-			write_to_file(Ptr, &client);
+			write_to_file(fd_of_filename, &client);
 			PRINT_OUTPUT_MESSAGE();
 		}
-		fclose(Ptr);
+		fclose(fd_of_filename);
 	}
 }
 
 void transaction_write(const char *filename) {
 	Data transfer = {0};
-	FILE *Ptr = fopen(filename, "r+");
-	if(Ptr == NULL) {
+	FILE *fd_of_filename = fopen(filename, "r+");
+	if(fd_of_filename == NULL) {
 		puts("Not acess");
 	} else {
-		printf("%s\n%s\n",
-			"1 Number account: ",
-			"2 Client cash payments: ");
+		PRINT_INPUT_FIELD();
 		while (scanf("%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
-			fprintf(Ptr, "%-3d%-6.2f\n", transfer.number, transfer.cash_payments);
-			printf("%s\n%s\n",
-				"1 Number account:",
-				"2 Client cash payments: ");
+			fprintf(fd_of_filename, "%-3d%-6.2f\n", transfer.number, transfer.cash_payments);
+			PRINT_INPUT_FIELD();
 		}
-		fclose(Ptr);
+		fclose(fd_of_filename);
 	}
 }
 
@@ -49,34 +46,33 @@ void write_transfer_to_file(const char *client_filename,
 	const char *transaction_filename,
 	const char *blackrecord_filename) {
 	Data client = {0}, transfer = {0};
-	FILE *Ptr, *Ptr_2, *blackrecord;
-	Ptr = fopen(client_filename, "r");
-	Ptr_2 = fopen(transaction_filename, "r");
-	blackrecord = fopen(blackrecord_filename, "w");
-	if (Ptr == NULL) {
+	FILE *fd_of_client_file = fopen(client_filename, "r");
+	FILE *fd_of_transaction_file = fopen(transaction_filename, "r");
+	FILE *fd_of_blackrecord = fopen(blackrecord_filename, "w");
+	if (fd_of_client_file == NULL) {
 		puts("exit");
-		fclose(Ptr_2);
-		fclose(blackrecord);
-	} else if (Ptr_2 == NULL) {
+		fclose(fd_of_transaction_file);
+		fclose(fd_of_blackrecord);
+	} else if (fd_of_transaction_file == NULL) {
 		puts("exit");
-		fclose(Ptr);
-		fclose(blackrecord);
-	} else if (blackrecord == NULL) {
+		fclose(fd_of_client_file);
+		fclose(fd_of_blackrecord);
+	} else if (fd_of_blackrecord == NULL) {
 		puts("exit");
-		fclose(Ptr);
-		fclose(Ptr_2);
+		fclose(fd_of_client_file);
+		fclose(fd_of_transaction_file);
 	} else {
-		while (read_from_file(Ptr, &client) != -1) {
-			while (fscanf(Ptr_2, "%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
+		while (read_from_file(fd_of_client_file, &client) != -1) {
+			while (fscanf(fd_of_transaction_file, "%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
 				if (client.number == transfer.number && transfer.cash_payments != 0) {
 					client.credit_limit += transfer.cash_payments;
 				}
 			}
-			write_to_file(blackrecord, &client);
-			rewind(Ptr_2);
+			write_to_file(fd_of_blackrecord, &client);
+			rewind(fd_of_transaction_file);
 		}
-		fclose(Ptr);
-		fclose(Ptr_2);
-		fclose(blackrecord);
+		fclose(fd_of_client_file);
+		fclose(fd_of_transaction_file);
+		fclose(fd_of_blackrecord);
 	}
 }

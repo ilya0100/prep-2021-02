@@ -4,7 +4,7 @@ int is_prime(const int number) {
     if (number <= 1) {
         return 0;
     }
-    for (int i = 2; i <= sqrt(number); ++i) {
+    for (int i = 2; i * i <= number; ++i) {
         if (number % i == 0) {
             return 0;
         }

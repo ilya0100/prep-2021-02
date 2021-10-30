@@ -1,5 +1,6 @@
 #include "matrix.h"
 
+// Init/release operations
 Matrix* create_matrix_from_file(const char* path_file) {
     FILE* path_file_fd = fopen(path_file, "r");
     if (path_file_fd == NULL) {
@@ -40,4 +41,37 @@ Matrix* create_matrix(size_t rows, size_t cols) {
 void free_matrix(Matrix* matrix) {
     free(matrix->elements);
     free(matrix);
+}
+
+// Basic operations
+int get_rows(const Matrix* matrix, size_t* rows) {
+    if (matrix == NULL) {
+        return -1;
+    }
+    *rows = matrix->rows_count;
+    return 0;
+}
+
+int get_cols(const Matrix* matrix, size_t* cols) {
+    if (matrix == NULL) {
+        return -1;
+    }
+    *cols = matrix->cols_count;
+    return 0;
+}
+
+int get_elem(const Matrix* matrix, size_t row, size_t col, double* val) {
+    if (matrix == NULL) {
+        return -1;
+    }
+    *val = matrix->elements[(row - 1) * matrix->cols_count + (col - 1)];
+    return 0;
+}
+
+int set_elem(Matrix* matrix, size_t row, size_t col, double val) {
+    if (matrix == NULL) {
+        return -1;
+    }
+    matrix->elements[(row - 1) * matrix->cols_count + (col - 1)] = val;
+    return 0;
 }

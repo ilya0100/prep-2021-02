@@ -98,7 +98,7 @@ Matrix* mul_scalar(const Matrix* matrix, double val) {
                 free_matrix(mul_scalar_matrix);
                 return NULL;
             }
-            if (set_elem(mul_scalar_matrix, i , j, buffer * val)) {
+            if (set_elem(mul_scalar_matrix, i, j, buffer * val)) {
                 free_matrix(mul_scalar_matrix);
                 return NULL;
             }
@@ -176,7 +176,7 @@ Matrix* sub(const Matrix* l, const Matrix* r) {
                 free_matrix(sub_matrix);
                 return NULL;
             }
-            if (set_elem(sub_matrix, i , j, buffer_l + buffer_r)) {
+            if (set_elem(sub_matrix, i , j, buffer_l - buffer_r)) {
                 free_matrix(sub_matrix);
                 return NULL;
             }
@@ -209,10 +209,130 @@ Matrix* mul(const Matrix* l, const Matrix* r) {
             }
             if (set_elem(mul_matrix, i, j, summ)) {
                 free_matrix(mul_matrix);
-                    return NULL;
+                return NULL;
             }
             summ = 0;
         }
     }
     return mul_matrix;
+}
+
+// Extra operations
+int det(const Matrix* matrix, double* val) {
+    if (matrix->rows_count != matrix->cols_count) {
+        return -1;
+    }
+    *val = determinant(matrix);
+    return 0;
+}
+
+Matrix* adj(const Matrix* matrix) {
+    if (matrix->rows_count != matrix->cols_count) {
+        return NULL;
+    }
+    Matrix* adj_matrix = create_matrix(matrix->rows_count, matrix->cols_count);
+    if (adj_matrix == NULL) {
+        return NULL;
+    }
+    if (matrix->rows_count == 1) {
+        *adj_matrix->elements = *matrix->elements;
+    } else {
+        for (size_t i = 0; i < adj_matrix->rows_count; ++i) {
+            for (size_t j = 0; j < adj_matrix->cols_count; ++j) {
+                Matrix* minor = remove_row_and_col(matrix, i, j);
+                if (minor == NULL) {
+                    free_matrix(adj_matrix);
+                    return NULL;
+                }
+                double element;
+                if (det(minor, &element)) {
+                    free_matrix(adj_matrix);
+                    free_matrix(minor);
+                    return NULL;
+                }
+                if ((i + j) % 2 == 0) {
+                    set_elem(adj_matrix, j, i, element);
+                } else {
+                    set_elem(adj_matrix, j, i, -element);
+                }
+                free_matrix(minor);
+            }
+        }
+    }
+    return adj_matrix;
+}
+
+Matrix* inv(const Matrix* matrix) {
+    if (matrix->rows_count != matrix->cols_count || matrix->rows_count <= 1) {
+        return NULL;
+    }
+    Matrix* inv_matrix = create_matrix(matrix->rows_count, matrix->cols_count);
+    if (inv_matrix == NULL) {
+        return NULL;
+    }
+    // double matrix_det;
+    // if (det(matrix, &matrix_det)) {
+    //     free_matrix(inv_matrix);
+    //     return NULL;
+    // } else if (matrix_det == 0) {
+    //     free_matrix(inv_matrix);
+    //     return NULL;
+    // }
+    // Matrix* adj_matrix = adj(matrix);
+    // if (adj_matrix == NULL) {
+    //     return NULL;
+    // }
+    // Matrix* inv_matrix = mul_scalar(adj(matrix), 1 / matrix_det);
+    // Matrix* inv_matrix = adj(matrix);
+    return inv_matrix;
+}
+
+// Additional operations
+Matrix* remove_row_and_col(const Matrix* matrix, size_t row, size_t col) {
+    Matrix* modified_matrix = create_matrix(matrix->rows_count - 1, matrix->cols_count - 1);
+    if (modified_matrix == NULL) {
+        return NULL;
+    }
+    size_t row_add = 0;
+    double buffer;
+    for (size_t i = 0; i < modified_matrix->rows_count; ++i) {
+        if (i == row) {
+            row_add = 1;
+        }
+        size_t col_add = 0;
+        for (size_t j = 0; j < modified_matrix->cols_count; ++j) {
+            if (j == col) {
+                col_add = 1;
+            }
+            if (get_elem(matrix, i + row_add, j + col_add, &buffer)) {
+                free_matrix(modified_matrix);
+                return NULL;
+            }
+            if (set_elem(modified_matrix, i, j, buffer)) {
+                free_matrix(modified_matrix);
+                return NULL;
+            }
+        }
+    }
+    return modified_matrix;
+}
+
+double determinant(const Matrix* matrix) {
+    if (matrix->rows_count == 1) {
+        return matrix->elements[0];
+    }
+    if (matrix->rows_count == 2) {
+        return matrix->elements[0] * matrix->elements[3] - matrix->elements[1] * matrix->elements[2];
+    }
+    double res = 0;
+    double sign = 1;
+    double buffer = 0;
+    for (size_t j = 0; j < matrix->cols_count; ++j) {
+        get_elem(matrix, 0, j, &buffer);
+        Matrix* minor = remove_row_and_col(matrix, 0, j);
+        res += sign * buffer * determinant(minor);
+        sign = - sign;
+        free_matrix(minor);
+    }
+    return res;
 }

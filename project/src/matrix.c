@@ -29,6 +29,11 @@ Matrix* create_matrix(size_t rows, size_t cols) {
     }
     new_matrix->rows_count = rows;
     new_matrix->cols_count = cols;
+    if (rows < 1 || cols < 1) {
+        perror("error");
+        free(new_matrix);
+        return NULL;
+    }
     new_matrix->elements = malloc(sizeof(double) * rows * cols);
     if (new_matrix->elements == NULL) {
         perror("error");
@@ -266,24 +271,27 @@ Matrix* inv(const Matrix* matrix) {
     if (matrix->rows_count != matrix->cols_count || matrix->rows_count <= 1) {
         return NULL;
     }
-    Matrix* inv_matrix = create_matrix(matrix->rows_count, matrix->cols_count);
+    // Matrix* inv_matrix = create_matrix(matrix->rows_count, matrix->cols_count);
+    // if (inv_matrix == NULL) {
+    //     return NULL;
+    // }
+    double matrix_det;
+    if (det(matrix, &matrix_det)) {
+        // free_matrix(inv_matrix);
+        return NULL;
+    } else if (matrix_det == 0) {
+        // free_matrix(inv_matrix);
+        return NULL;
+    }
+    Matrix* adj_matrix = adj(matrix);
+    if (adj_matrix == NULL) {
+        return NULL;
+    }
+    Matrix* inv_matrix = mul_scalar(adj(matrix), 1 / matrix_det);
+    free_matrix(adj_matrix);
     if (inv_matrix == NULL) {
         return NULL;
     }
-    // double matrix_det;
-    // if (det(matrix, &matrix_det)) {
-    //     free_matrix(inv_matrix);
-    //     return NULL;
-    // } else if (matrix_det == 0) {
-    //     free_matrix(inv_matrix);
-    //     return NULL;
-    // }
-    // Matrix* adj_matrix = adj(matrix);
-    // if (adj_matrix == NULL) {
-    //     return NULL;
-    // }
-    // Matrix* inv_matrix = mul_scalar(adj(matrix), 1 / matrix_det);
-    // Matrix* inv_matrix = adj(matrix);
     return inv_matrix;
 }
 

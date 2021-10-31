@@ -1,7 +1,7 @@
 #include "matrix.h"
 
-#define ROWS 1
-#define COLS 1
+#define ROWS 2
+#define COLS 2
 
 
 int main(void) {
@@ -21,15 +21,19 @@ int main(void) {
         printf("\n");
     }
     printf("\n");
-    matrix = inv(matrix);
+    Matrix* matrix1 = inv(matrix);
     for (size_t i = 0; i < ROWS; ++i) {
         for (size_t j = 0; j < COLS; ++j) {
-            get_elem(matrix, i, j, &buffer);
+            get_elem(matrix1, i, j, &buffer);
             printf("%lf ", buffer);
         }
         printf("\n");
     }
+    printf("\n");
+    printf("%zu %zu\n", matrix->rows_count, matrix->cols_count);
+    printf("%zu %zu\n", matrix1->rows_count, matrix1->cols_count);
     free_matrix(matrix);
+    free_matrix(matrix1);
     return 0;
 }
 

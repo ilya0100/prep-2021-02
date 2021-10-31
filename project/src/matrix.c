@@ -44,8 +44,12 @@ Matrix* create_matrix(size_t rows, size_t cols) {
 }
 
 void free_matrix(Matrix* matrix) {
-    free(matrix->elements);
-    free(matrix);
+    if (matrix->elements != NULL) {
+        free(matrix->elements);
+    }
+    if (matrix != NULL) {
+        free(matrix);
+    }
 }
 
 // Basic operations
@@ -240,7 +244,7 @@ Matrix* adj(const Matrix* matrix) {
         return NULL;
     }
     if (matrix->rows_count == 1) {
-        *adj_matrix->elements = *matrix->elements;
+        *adj_matrix->elements = 1;
     } else {
         for (size_t i = 0; i < adj_matrix->rows_count; ++i) {
             for (size_t j = 0; j < adj_matrix->cols_count; ++j) {
@@ -268,26 +272,20 @@ Matrix* adj(const Matrix* matrix) {
 }
 
 Matrix* inv(const Matrix* matrix) {
-    if (matrix->rows_count != matrix->cols_count || matrix->rows_count <= 1) {
+    if (matrix->rows_count != matrix->cols_count) {
         return NULL;
     }
-    // Matrix* inv_matrix = create_matrix(matrix->rows_count, matrix->cols_count);
-    // if (inv_matrix == NULL) {
-    //     return NULL;
-    // }
     double matrix_det;
     if (det(matrix, &matrix_det)) {
-        // free_matrix(inv_matrix);
         return NULL;
     } else if (matrix_det == 0) {
-        // free_matrix(inv_matrix);
         return NULL;
     }
     Matrix* adj_matrix = adj(matrix);
     if (adj_matrix == NULL) {
         return NULL;
     }
-    Matrix* inv_matrix = mul_scalar(adj(matrix), 1 / matrix_det);
+    Matrix* inv_matrix = mul_scalar(adj_matrix, 1 / matrix_det);
     free_matrix(adj_matrix);
     if (inv_matrix == NULL) {
         return NULL;

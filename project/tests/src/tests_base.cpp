@@ -52,7 +52,7 @@ TEST(MatrixBaseSuite, CopyAssign) {
   const prep::Matrix m2{m1};
   ASSERT_EQ(m1, m2);
 
-  auto m3 = genM();
+  prep::Matrix m3;
   ASSERT_NO_THROW(m3 = m1);
   ASSERT_EQ(m1, m3);
 }

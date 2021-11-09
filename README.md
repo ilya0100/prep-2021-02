@@ -83,9 +83,9 @@
 
 * `double det() const` - определитель матрицы.
 * `Matrix adj() const` - присоединенная матрица.
-* `Matrix inv() const` - обратная матрица. Брасает `SingularMatrix`.
+* `Matrix inv() const` - обратная матрица. Бросает `SingularMatrix`.
 
-Брасают исключения `DimensionMismatch`.
+По некорректной размерности - бросают исключения `DimensionMismatch`.
 
 ## Не забываем
 

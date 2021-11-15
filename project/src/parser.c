@@ -41,7 +41,7 @@ string_t *create_string_t() {
 }
 
 void free_string_t(string_t *str) {
-    if (str->data != NULL) {
+    if (str != NULL && str->data != NULL) {
         free(str->data);
     }
     if (str !=NULL) {
@@ -94,17 +94,6 @@ typedef struct {
     action_t action;
 } rule_t;
 
-static int get_string(string_t *str, FILE *eml_file) {
-    if (str == NULL || eml_file == NULL) {
-        return -1;
-    }
-    if ((str->length = getline(&str->data, &str->size, eml_file)) == -1) {
-        return -1;
-    }
-    *(str->data + str->length) = '\0';
-    return 0;
-}
-
 static int copy_string_without_ws(char **data, string_t *str, size_t number_of_skips) {
     if (*data == NULL || str == NULL) {
         return -1;
@@ -123,12 +112,29 @@ static int copy_string_without_ws(char **data, string_t *str, size_t number_of_s
     return 0;
 }
 
+static string_t *get_string(FILE *eml_file) {
+    if (eml_file == NULL) {
+        return NULL;
+    }
+    string_t *new_str = create_string_t();
+    if ((new_str->length = getline(&new_str->data, &new_str->size, eml_file)) == -1) {
+        free_string_t(new_str);
+        return NULL;
+    }
+    *(new_str->data + new_str->length) = '\0';
+    new_str->data = realloc(new_str->data, new_str->size);
+    return new_str;
+}
+
 static int read_multiline_header(FILE *eml_file, string_t *str) {
-    string_t *buffer = create_string_t();
-    if (buffer == NULL) {
+    if (str == NULL) {
         return -1;
     }
-    while (get_string(buffer, eml_file) != -1) {
+    while (1) {
+        string_t *buffer = get_string(eml_file);
+        if (buffer == NULL) {
+            break;
+        }
         if (*buffer->data == ' ' || *buffer->data == '\t') {
             str->size = str->size + buffer->size;
             str->length = str->length + buffer->length;
@@ -140,8 +146,8 @@ static int read_multiline_header(FILE *eml_file, string_t *str) {
             }
             break;
         }
+        free_string_t(buffer);
     }
-    free_string_t(buffer);
     return 0;
 }
 
@@ -311,13 +317,9 @@ int get_eml(const char *path_to_eml, data_t *eml_data) {
     }
     state_t state = S_BEGIN;
     lexem_t lexem;
-    string_t *str = create_string_t();
     while (1) {
+        string_t *str = get_string(eml_file);
         if (str == NULL) {
-            free(eml_file);
-            return -1;
-        }
-        if (get_string(str, eml_file) == -1) {
             lexem = L_NULL;
         } else {
             lexem = get_lexem(str);
@@ -343,13 +345,12 @@ int get_eml(const char *path_to_eml, data_t *eml_data) {
             eml_data->bound_status = 0;
         }
         if (rule.state == S_END) {
-            free_string_t(str);
             free(eml_file);
             return 0;
         }
         state = rule.state;
+        free_string_t(str);
     }
-    free_string_t(str);
     free(eml_file);
     return -1;
 }

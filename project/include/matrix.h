@@ -1,10 +1,18 @@
 #pragma once // NOLINT
 
+#include <cmath>
 #include <vector>
 #include <istream>
+#include <iomanip>
+#include <limits>
 
 namespace prep {
+
 class Matrix {
+  size_t rowsCount;
+  size_t colsCount;
+  std::vector<double> elements;
+
  public:
   explicit Matrix(size_t rows = 0, size_t cols = 0);
   explicit Matrix(std::istream& is);

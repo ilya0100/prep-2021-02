@@ -57,7 +57,8 @@ namespace prep {
 
         for (size_t i = 0; i < rowsCount; i++) {
             for (size_t j = 0; j < colsCount; j++) {
-                if (abs(elements[i * colsCount + j] - rhs(i, j)) > std::numeric_limits<double>::epsilon()) {
+                if (std::abs((*this)(i, j) - rhs(i, j)) >
+                    std::numeric_limits<double>::epsilon()) {
                     return false;
                 }
             }
@@ -72,7 +73,8 @@ namespace prep {
 
         for (size_t i = 0; i < rowsCount; i++) {
             for (size_t j = 0; j < colsCount; j++) {
-                if (abs(elements[i * colsCount + j] - rhs(i, j)) > std::numeric_limits<double>::epsilon()) {
+                if (std::abs((*this)(i, j) - rhs(i, j)) >
+                    std::numeric_limits<double>::epsilon()) {
                     return true;
                 }
             }
@@ -87,7 +89,6 @@ namespace prep {
             }
             os << std::endl;
         }
-        os << std::endl;
         return os;
     }
 
@@ -99,7 +100,7 @@ namespace prep {
         Matrix result(rowsCount, colsCount);
         for (size_t i = 0; i < result.rowsCount; i++) {
             for (size_t j = 0; j < result.colsCount; j++) {
-                result(i, j) = elements[i * colsCount + j] + rhs(i, j);
+                result(i, j) = (*this)(i, j) + rhs(i, j);
             }
         }
         return result;
@@ -113,7 +114,7 @@ namespace prep {
         Matrix result(rowsCount, colsCount);
         for (size_t i = 0; i < result.rowsCount; i++) {
             for (size_t j = 0; j < result.colsCount; j++) {
-                result(i, j) = elements[i * colsCount + j] - rhs(i, j);
+                result(i, j) = (*this)(i, j) - rhs(i, j);
             }
         }
         return result;
@@ -130,7 +131,7 @@ namespace prep {
         for (size_t j = 0; j < rhs.colsCount; j++) {
             for (size_t i = 0; i < rowsCount; i++) {
                 for (size_t k = 0; k < colsCount; k++) {
-                    sum += elements[i * colsCount + k] * rhs(k, j);
+                    sum += (*this)(i, k) * rhs(k, j);
                 }
                 result(i, j) = sum;
                 sum = 0;
@@ -143,7 +144,7 @@ namespace prep {
         Matrix result(colsCount, rowsCount);
         for (size_t i = 0; i < rowsCount; i++) {
             for (size_t j = 0; j < colsCount; j++) {
-                result(j, i) = elements[i * colsCount + j];
+                result(j, i) = (*this)(i, j);
             }
         }
         return result;
@@ -153,7 +154,7 @@ namespace prep {
         Matrix result(rowsCount, colsCount);
         for (size_t i = 0; i < rowsCount; i++) {
             for (size_t j = 0; j < colsCount; j++) {
-                result(i, j) = elements[i * colsCount + j] * val;
+                result(i, j) = (*this)(i, j) * val;
             }
         }
         return result;
@@ -170,23 +171,79 @@ namespace prep {
     }
 
     double Matrix::det() const {
-        double value = 0;
-        return value;
+        if (rowsCount != colsCount) {
+            throw DimensionMismatch(*this);
+        }
+        return (*this).recursiveDet();
     }
 
     Matrix Matrix::adj() const {
         if (rowsCount != colsCount) {
-            // throw DimensionMismatch(, rhs);
+            throw DimensionMismatch(*this);
         }
         Matrix result(rowsCount, colsCount);
+        if (rowsCount == 1 && colsCount == 1) {
+            result(0, 0) = 1;
+            return result;
+        }
+        for (size_t i = 0; i < result.rowsCount; i++) {
+            for (size_t j = 0; j < result.colsCount; j++) {
+                // Matrix minor = delRowAndCol(i, j);
+                if ((i + j) % 2 == 0) {
+                    result(j, i) = delRowAndCol(i, j).det();  // minor.det();
+                } else {
+                    result(j, i) = - delRowAndCol(i, j).det();  // minor.det();
+                }
+            }
+        }
         return result;
     }
 
     Matrix Matrix::inv() const {
         if (rowsCount != colsCount) {
-            // throw DimensionMismatch(, rhs);
+            throw DimensionMismatch(*this);
         }
-        Matrix result(rowsCount, colsCount);
-        return result;
+        return adj() * (1 / det());
+    }
+
+    Matrix Matrix::delRowAndCol(size_t row, size_t col) const {
+        if (rowsCount == 1 || colsCount == 1) {
+            return Matrix();
+        }
+        Matrix modMatrix(rowsCount - 1, colsCount - 1);
+        size_t rowAdd = 0;
+        for (size_t i = 0; i < modMatrix.rowsCount; i++) {
+            if (i == row) {
+                rowAdd = 1;
+            }
+            size_t colAdd = 0;
+            for (size_t j = 0; j < modMatrix.colsCount; j++) {
+                if (j == col) {
+                    colAdd = 1;
+                }
+                modMatrix(i, j) = (*this)(i + rowAdd, j + colAdd);
+            }
+        }
+        return modMatrix;
+    }
+
+    double Matrix::recursiveDet() const {
+        if (rowsCount != colsCount) {
+            throw DimensionMismatch(*this);
+        }
+        if (rowsCount == 1) {
+            return (*this)(0, 0);
+        }
+        if (rowsCount == 2) {
+            return (*this)(0, 0) * (*this)(1, 1) - (*this)(0, 1) * (*this)(1, 0);
+        }
+        double res = 0;
+        double sign = 1;
+        for (size_t j = 0; j < colsCount; j++) {
+            Matrix minor = (*this).delRowAndCol(0, j);
+            res += sign * (*this)(0, j) * minor.recursiveDet();
+            sign = - sign;
+        }
+        return res;
     }
 }  // namespace prep

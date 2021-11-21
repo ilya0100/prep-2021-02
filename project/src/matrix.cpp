@@ -84,9 +84,13 @@ namespace prep {
 
     std::ostream& operator<<(std::ostream& os, const Matrix& matrix) {
         os << matrix.rowsCount << " " << matrix.colsCount << std::endl;
+
         for (size_t i = 0; i < matrix.rowsCount; i++) {
             for (size_t j = 0; j < matrix.colsCount; j++) {
-                os << std::setprecision(std::numeric_limits<double>::max_digits10) << matrix(i, j) << " ";
+                os << std::setprecision(std::numeric_limits<double>::max_digits10) << matrix(i, j);
+                if (j < matrix.colsCount - 1) {
+                    os << " ";
+                }
             }
             os << std::endl;
         }
@@ -175,7 +179,20 @@ namespace prep {
         if (rowsCount != colsCount) {
             throw DimensionMismatch(*this);
         }
-        return (*this).recursiveDet();
+        if (rowsCount == 1) {
+            return (*this)(0, 0);
+        }
+        if (rowsCount == 2) {
+            return (*this)(0, 0) * (*this)(1, 1) - (*this)(0, 1) * (*this)(1, 0);
+        }
+        double res = 0;
+        double sign = 1;
+        for (size_t j = 0; j < colsCount; j++) {
+            Matrix minor = (*this).delRowAndCol(0, j);
+            res += sign * (*this)(0, j) * minor.det();
+            sign = - sign;
+        }
+        return res;
     }
 
     Matrix Matrix::adj() const {
@@ -189,11 +206,10 @@ namespace prep {
         }
         for (size_t i = 0; i < result.rowsCount; i++) {
             for (size_t j = 0; j < result.colsCount; j++) {
-                // Matrix minor = delRowAndCol(i, j);
                 if ((i + j) % 2 == 0) {
-                    result(j, i) = delRowAndCol(i, j).det();  // minor.det();
+                    result(j, i) = delRowAndCol(i, j).det();
                 } else {
-                    result(j, i) = - delRowAndCol(i, j).det();  // minor.det();
+                    result(j, i) = - delRowAndCol(i, j).det();
                 }
             }
         }
@@ -204,7 +220,11 @@ namespace prep {
         if (rowsCount != colsCount) {
             throw DimensionMismatch(*this);
         }
-        return adj() * (1 / det());
+        double determinant = det();
+        if (determinant == 0) {
+            throw SingularMatrix();
+        }
+        return adj() * (1 / determinant);
     }
 
     Matrix Matrix::delRowAndCol(size_t row, size_t col) const {
@@ -228,23 +248,4 @@ namespace prep {
         return modMatrix;
     }
 
-    double Matrix::recursiveDet() const {
-        if (rowsCount != colsCount) {
-            throw DimensionMismatch(*this);
-        }
-        if (rowsCount == 1) {
-            return (*this)(0, 0);
-        }
-        if (rowsCount == 2) {
-            return (*this)(0, 0) * (*this)(1, 1) - (*this)(0, 1) * (*this)(1, 0);
-        }
-        double res = 0;
-        double sign = 1;
-        for (size_t j = 0; j < colsCount; j++) {
-            Matrix minor = (*this).delRowAndCol(0, j);
-            res += sign * (*this)(0, j) * minor.recursiveDet();
-            sign = - sign;
-        }
-        return res;
-    }
 }  // namespace prep

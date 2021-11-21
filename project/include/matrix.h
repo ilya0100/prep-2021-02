@@ -14,7 +14,6 @@ class Matrix {
   std::vector<double> elements;
 
   Matrix delRowAndCol(size_t row, size_t col) const;
-  double recursiveDet() const;
 
  public:
   explicit Matrix(size_t rows = 0, size_t cols = 0);

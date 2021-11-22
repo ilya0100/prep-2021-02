@@ -1,6 +1,8 @@
 #include "matrix.h"
 #include "exceptions.h"
 
+#define EPS 1e-7
+
 namespace prep {
     Matrix::Matrix(size_t rows, size_t cols) {
         rowsCount = rows;
@@ -57,8 +59,7 @@ namespace prep {
 
         for (size_t i = 0; i < rowsCount; i++) {
             for (size_t j = 0; j < colsCount; j++) {
-                if (std::abs((*this)(i, j) - rhs(i, j)) >
-                    std::numeric_limits<double>::epsilon()) {
+                if (std::abs((*this)(i, j) - rhs(i, j)) > EPS) {
                     return false;
                 }
             }
@@ -73,8 +74,7 @@ namespace prep {
 
         for (size_t i = 0; i < rowsCount; i++) {
             for (size_t j = 0; j < colsCount; j++) {
-                if (std::abs((*this)(i, j) - rhs(i, j)) >
-                    std::numeric_limits<double>::epsilon()) {
+                if (std::abs((*this)(i, j) - rhs(i, j)) > EPS) {
                     return true;
                 }
             }

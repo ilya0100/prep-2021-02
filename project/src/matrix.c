@@ -1,21 +1,38 @@
 #include "matrix.h"
 
-// Init/release operations
+#define EPS 1e-7
+
 Matrix* create_matrix_from_file(const char* path_file) {
     FILE* path_file_fd = fopen(path_file, "r");
     if (path_file_fd == NULL) {
         perror("error");
         return NULL;
     }
+
     size_t rows = 0, cols = 0;
-    if (fscanf(path_file_fd, "%zu %zu", &rows, &cols) == -1) {
+    if (fscanf(path_file_fd, "%zu", &rows) == -1) {
         perror("error");
         fclose(path_file_fd);
         return NULL;
     }
+    if (fscanf(path_file_fd, "%zu", &cols) == -1) {
+        perror("error");
+        fclose(path_file_fd);
+        return NULL;
+    }
+
     Matrix* matrix_from_file = create_matrix(rows, cols);
+    if (matrix_from_file == NULL) {
+        fclose(path_file_fd);
+        return NULL;
+    }
+
     for (size_t i = 0; i < rows * cols; ++i) {
-        fscanf(path_file_fd, "%lf", &matrix_from_file->elements[i]);
+        if (fscanf(path_file_fd, "%lf", &matrix_from_file->elements[i]) == -1) {
+            free_matrix(matrix_from_file);
+            fclose(path_file_fd);
+            return NULL;
+        }
     }
     fclose(path_file_fd);
     return matrix_from_file;
@@ -27,13 +44,13 @@ Matrix* create_matrix(size_t rows, size_t cols) {
         perror("error");
         return NULL;
     }
-    new_matrix->rows_count = rows;
-    new_matrix->cols_count = cols;
     if (rows < 1 || cols < 1) {
         perror("error");
         free(new_matrix);
         return NULL;
     }
+    new_matrix->rows_count = rows;
+    new_matrix->cols_count = cols;
     new_matrix->elements = malloc(sizeof(double) * rows * cols);
     if (new_matrix->elements == NULL) {
         perror("error");
@@ -52,7 +69,6 @@ void free_matrix(Matrix* matrix) {
     }
 }
 
-// Basic operations
 int get_rows(const Matrix* matrix, size_t* rows) {
     if (matrix == NULL) {
         return -1;
@@ -73,7 +89,10 @@ int get_elem(const Matrix* matrix, size_t row, size_t col, double* val) {
     if (matrix == NULL) {
         return -1;
     }
-    if (row + 1 > matrix->rows_count || col + 1 > matrix->cols_count) {
+    if (matrix->elements == NULL) {
+        return -1;
+    }
+    if (row >= matrix->rows_count || col >= matrix->cols_count) {
         return -1;
     }
     *val = matrix->elements[row * matrix->cols_count + col];
@@ -84,16 +103,21 @@ int set_elem(Matrix* matrix, size_t row, size_t col, double val) {
     if (matrix == NULL) {
         return -1;
     }
-    if (row + 1 > matrix->rows_count || col + 1 > matrix->cols_count) {
+    if (matrix->elements == NULL) {
+        return -1;
+    }
+    if (row >= matrix->rows_count || col >= matrix->cols_count) {
         return -1;
     }
     matrix->elements[row * matrix->cols_count + col] = val;
     return 0;
 }
 
-// Math operations
 Matrix* mul_scalar(const Matrix* matrix, double val) {
     if (matrix == NULL) {
+        return NULL;
+    }
+    if (matrix->elements == NULL) {
         return NULL;
     }
     Matrix* mul_scalar_matrix = create_matrix(matrix->rows_count, matrix->cols_count);
@@ -120,6 +144,9 @@ Matrix* transp(const Matrix* matrix) {
     if (matrix == NULL) {
         return NULL;
     }
+    if (matrix->elements == NULL) {
+        return NULL;
+    }
     Matrix* transp_matrix = create_matrix(matrix->cols_count, matrix->rows_count);
     if (transp_matrix == NULL) {
         return NULL;
@@ -142,6 +169,9 @@ Matrix* transp(const Matrix* matrix) {
 
 Matrix* sum(const Matrix* l, const Matrix* r) {
     if (l == NULL || r == NULL) {
+        return NULL;
+    }
+    if (l->elements == NULL || r->elements == NULL) {
         return NULL;
     }
     if (l->rows_count != r->rows_count || l->cols_count != r->cols_count) {
@@ -171,6 +201,9 @@ Matrix* sub(const Matrix* l, const Matrix* r) {
     if (l == NULL || r == NULL) {
         return NULL;
     }
+    if (l->elements == NULL || r->elements == NULL) {
+        return NULL;
+    }
     if (l->rows_count != r->rows_count || l->cols_count != r->cols_count) {
         return NULL;
     }
@@ -198,6 +231,9 @@ Matrix* mul(const Matrix* l, const Matrix* r) {
     if (l == NULL || r == NULL) {
         return NULL;
     }
+    if (l->elements == NULL || r->elements == NULL) {
+        return NULL;
+    }
     if (l->cols_count != r->rows_count) {
         return NULL;
     }
@@ -205,10 +241,10 @@ Matrix* mul(const Matrix* l, const Matrix* r) {
     if (mul_matrix == NULL) {
         return NULL;
     }
-    double summ = 0;
     double buffer_l, buffer_r;
     for (size_t j = 0; j < r->cols_count; ++j) {
         for (size_t i = 0; i < l->rows_count; ++i) {
+            double summ = 0;
             for (size_t k = 0; k < l->cols_count; ++k) {
                 if (get_elem(l, i, k, &buffer_l) || get_elem(r, k, j, &buffer_r)) {
                     free_matrix(mul_matrix);
@@ -220,14 +256,21 @@ Matrix* mul(const Matrix* l, const Matrix* r) {
                 free_matrix(mul_matrix);
                 return NULL;
             }
-            summ = 0;
         }
     }
     return mul_matrix;
 }
 
-// Extra operations
 int det(const Matrix* matrix, double* val) {
+    if (matrix == NULL) {
+        return -1;
+    }
+    if (matrix->elements == NULL) {
+        return -1;
+    }
+    if (val == NULL) {
+        return -1;
+    }
     if (matrix->rows_count != matrix->cols_count) {
         return -1;
     }
@@ -236,6 +279,12 @@ int det(const Matrix* matrix, double* val) {
 }
 
 Matrix* adj(const Matrix* matrix) {
+    if (matrix == NULL) {
+        return NULL;
+    }
+    if (matrix->elements == NULL) {
+        return NULL;
+    }
     if (matrix->rows_count != matrix->cols_count) {
         return NULL;
     }
@@ -272,13 +321,19 @@ Matrix* adj(const Matrix* matrix) {
 }
 
 Matrix* inv(const Matrix* matrix) {
+    if (matrix == NULL) {
+        return NULL;
+    }
+    if (matrix->elements == NULL) {
+        return NULL;
+    }
     if (matrix->rows_count != matrix->cols_count) {
         return NULL;
     }
     double matrix_det;
     if (det(matrix, &matrix_det)) {
         return NULL;
-    } else if (matrix_det == 0) {
+    } else if (fabs(matrix_det) < EPS) {
         return NULL;
     }
     Matrix* adj_matrix = adj(matrix);
@@ -293,8 +348,13 @@ Matrix* inv(const Matrix* matrix) {
     return inv_matrix;
 }
 
-// Additional operations
 Matrix* remove_row_and_col(const Matrix* matrix, size_t row, size_t col) {
+    if (matrix == NULL) {
+        return NULL;
+    }
+    if (matrix->elements == NULL) {
+        return NULL;
+    }
     Matrix* modified_matrix = create_matrix(matrix->rows_count - 1, matrix->cols_count - 1);
     if (modified_matrix == NULL) {
         return NULL;
@@ -324,6 +384,12 @@ Matrix* remove_row_and_col(const Matrix* matrix, size_t row, size_t col) {
 }
 
 double determinant(const Matrix* matrix) {
+    if (matrix == NULL) {
+        return 0;
+    }
+    if (matrix->elements == NULL) {
+        return 0;
+    }
     if (matrix->rows_count == 1) {
         return matrix->elements[0];
     }

@@ -1,6 +1,7 @@
 #ifndef PROJECT_INCLUDE_MATRIX_H_
 #define PROJECT_INCLUDE_MATRIX_H_
 
+#include <math.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>

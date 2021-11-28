@@ -27,11 +27,19 @@ Matrix* create_matrix_from_file(const char* path_file) {
         return NULL;
     }
 
-    for (size_t i = 0; i < rows * cols; ++i) {
-        if (fscanf(path_file_fd, "%lf", &matrix_from_file->elements[i]) == -1) {
-            free_matrix(matrix_from_file);
-            fclose(path_file_fd);
-            return NULL;
+    double buffer;
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
+            if (fscanf(path_file_fd, "%lf", &buffer) == -1) {
+                free_matrix(matrix_from_file);
+                fclose(path_file_fd);
+                return NULL;
+            }
+            if (set_elem(matrix_from_file, i, j, buffer) == -1) {
+                free_matrix(matrix_from_file);
+                fclose(path_file_fd);
+                return NULL;
+            }
         }
     }
     fclose(path_file_fd);

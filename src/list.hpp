@@ -7,34 +7,47 @@ namespace task {
 
 template<class T>
 class list {
+ private:
+    struct Node {
+        T data;
+        Node *next;
+        Node *prev;
 
-public:
+        Node(T new_data = T(), Node* new_next = nullptr, Node* new_prev = nullptr):
+            data(T()), next(nullptr), prev(nullptr) {}
+    };
+
+ public:
     class iterator {
-    public:
+     public:
         using difference_type = ptrdiff_t;
         using value_type = T;
         using pointer = T*;
         using reference = T&;
         using iterator_category = std::bidirectional_iterator_tag;
 
-        iterator();
-        iterator(const iterator&);
-        iterator& operator=(const iterator&);
+        iterator(): current{nullptr} {}
+        iterator(const Node* node): current(node) {}
+        iterator(const iterator& it): current(it) {}
+        iterator& operator=(const iterator& it);
+        iterator& operator=(Node* node);
 
         iterator& operator++();
-        iterator operator++(int);
+        iterator operator++(int num);
         reference operator*() const;
         pointer operator->() const;
         iterator& operator--();
-        iterator operator--(int);
+        iterator operator--(int num);
+
+        Node* get_prev() const;
+        Node* get_next() const;
+        Node* get_current() const;
 
         bool operator==(iterator other) const;
         bool operator!=(iterator other) const;
 
-        // Your code goes here?..
-
-    private:
-        // Your code hoes here...
+     private:
+        Node* current;
     };
 
     class const_iterator {
@@ -102,14 +115,148 @@ public:
     void unique();
     void sort();
 
-    // Your code goes here?..
+ private:
+    iterator begin_it;
+    iterator end_it;
 
-private:
+    Node* begin_node;
+    Node* end_node;
 
-    // Your code goes here...
-
+    size_t list_size;
 };
 
-// Your template function definitions may go here...
 
+template<class T>
+    typename list<T>::iterator& list<T>::iterator::operator=(const iterator& it) {
+        *this = it;
+        return *this;
+    }
+
+template<class T>
+    typename list<T>::iterator& list<T>::iterator::operator=(Node* node) {
+        this->current = node;
+        return *this;
+    }
+
+template<class T>
+    typename list<T>::iterator& list<T>::iterator::operator++() {
+        current = current->next;
+        return *this;
+    }
+
+template<class T>
+    typename list<T>::iterator list<T>::iterator::operator++(int num) {
+        for (int i = 0; i < num; i++) {
+            current = current->next;
+        }
+        return *this;
+    }
+
+template<class T>
+    typename list<T>::iterator::reference list<T>::iterator::operator*() const {
+        return current->data;
+    }
+template<class T>
+    typename list<T>::iterator::pointer list<T>::iterator::operator->() const {
+        return &(current->data);
+    }
+
+template<class T>
+    typename list<T>::iterator& list<T>::iterator::operator--() {
+        current = current->prev;
+        return *this;
+    }
+
+template<class T>
+    typename list<T>::iterator list<T>::iterator::operator--(int num) {
+        for (int i = 0; i < num; i++) {
+            current = current->prev;
+        }
+        return *this;
+    }
+
+template<class T>
+    bool list<T>::iterator::operator==(iterator other) const {
+        return current == other.current;
+    }
+
+template<class T>
+    bool list<T>::iterator::operator!=(iterator other) const {
+        return current != other.current;
+    }
+
+template<class T>
+    typename list<T>::Node* list<T>::iterator::get_prev() const {
+        return current->prev;
+    }
+
+template<class T>
+    typename list<T>::Node* list<T>::iterator::get_next() const {
+        return current->next;
+    }
+
+template<class T>
+    typename list<T>::Node* list<T>::iterator::get_current() const {
+        return current;
+    }
+
+
+template<class T>
+    list<T>::list(): begin_it(), end_it(), list_size(0) {
+        
+    }
+
+template<class T>
+    list<T>::list(size_t count, const T& value): begin_it(), end_it(), list_size(count) {
+        for (size_t i = 0; i < count; i++) {
+            push_back(value);
+        }
+    }
+
+template<class T>
+    list<T>::list(size_t count): begin_it(), end_it(), list_size(count) {
+        for (size_t i = 0; i < count; i++) {
+            push_back(T());
+        }
+    }
+
+template<class T>
+    list<T>::~list() {
+        clear();
+    }
+
+template<class T>
+    bool list<T>::empty() const {
+        return list_size == 0;
+    }
+
+template<class T>
+    void list<T>::push_back(const T& value) {
+        Node* new_node = new Node;
+        new_node->data = value;
+
+        Node* next = new Node;
+        next->next = nullptr;
+        next->prev = new_node;
+        next->data = T();
+
+        new_node->next = next;
+
+        if (empty()) {
+            new_node->prev = nullptr;
+        } else {
+            new_node->prev = end_it.get_prev();
+        }
+        begin_it = new_node;
+        end_it = next;
+        list_size++;
+    }
+
+template<class T>
+    void list<T>::pop_back() {
+        if (empty()) { return; }
+        Node* temp = end_it.get_prev();
+        (temp->prev)->next = end_it.get_node();
+        Node* new_end_it  
+    }
 }  // namespace task

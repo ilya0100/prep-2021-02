@@ -94,8 +94,8 @@ typedef struct {
     action_t action;
 } rule_t;
 
-static int copy_string_without_ws(char **data, string_t *str, size_t number_of_skips) {
-    if (*data == NULL || str == NULL) {
+static int copy_string_without_ws(char *data, string_t *str, size_t number_of_skips) {
+    if (data == NULL || str == NULL) {
         return -1;
     }
     char *buffer = str->data;
@@ -105,7 +105,7 @@ static int copy_string_without_ws(char **data, string_t *str, size_t number_of_s
     size_t length = 0;
     for (ssize_t i = number_of_skips; i <= str->length; ++i) {
         if (buffer[i] != '\n' && buffer[i] != '\r' && buffer[i] != '\t') {
-            *(*data + length) = buffer[i];
+            *(data + length) = buffer[i];
             length++;
         }
     }
@@ -121,8 +121,6 @@ static string_t *get_string(FILE *eml_file) {
         free_string_t(new_str);
         return NULL;
     }
-    *(new_str->data + new_str->length) = '\0';
-    new_str->data = realloc(new_str->data, new_str->size);
     return new_str;
 }
 
@@ -166,7 +164,7 @@ static int get_from(FILE *eml_file, string_t *str, data_t *eml_data) {
     if (eml_data->from == NULL) {
         return -1;
     }
-    if (copy_string_without_ws(&eml_data->from, str, sizeof("From:") - 1) == -1) {
+    if (copy_string_without_ws(eml_data->from, str, sizeof("From:") - 1) == -1) {
         free(eml_data->from);
         return -1;
     }
@@ -188,7 +186,7 @@ static int get_to(FILE *eml_file, string_t *str, data_t *eml_data) {
     if (eml_data->to == NULL) {
         return -1;
     }
-    if (copy_string_without_ws(&eml_data->to, str, sizeof("To:") - 1) == -1) {
+    if (copy_string_without_ws(eml_data->to, str, sizeof("To:") - 1) == -1) {
         free(eml_data->to);
         return -1;
     }
@@ -210,7 +208,7 @@ static int get_date(FILE *eml_file, string_t *str, data_t *eml_data) {
     if (eml_data->date == NULL) {
         return -1;
     }
-    if (copy_string_without_ws(&eml_data->date, str, sizeof("Date:") - 1) == -1) {
+    if (copy_string_without_ws(eml_data->date, str, sizeof("Date:") - 1) == -1) {
         free(eml_data->date);
         return -1;
     }
@@ -326,14 +324,14 @@ int get_eml(const char *path_to_eml, data_t *eml_data) {
         }
         if (lexem == L_ERR) {
             free_string_t(str);
-            free(eml_file);
+            fclose(eml_file);
             return -1;
         }
         rule_t rule = syntax[state][lexem];
         if (rule.action != NULL) {
             if (rule.action(eml_file, str, eml_data) == -1) {
                 free_string_t(str);
-                free(eml_file);
+                fclose(eml_file);
                 return -1;
             }
         }
@@ -345,12 +343,12 @@ int get_eml(const char *path_to_eml, data_t *eml_data) {
             eml_data->bound_status = 0;
         }
         if (rule.state == S_END) {
-            free(eml_file);
+            fclose(eml_file);
             return 0;
         }
         state = rule.state;
         free_string_t(str);
     }
-    free(eml_file);
+    fclose(eml_file);
     return -1;
 }

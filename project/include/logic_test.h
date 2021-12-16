@@ -3,7 +3,7 @@
 
 #include "utils.h"
 
-void write_data_to_file(const char *filename);
+void write_input_to_file(const char *filename);
 void transaction_write(const char *filename);
 void write_transfer_to_file(const char *client_filename,
     const char *transaction_filename,

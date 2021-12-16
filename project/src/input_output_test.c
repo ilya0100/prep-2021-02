@@ -1,6 +1,6 @@
 #include "input_output_test.h"
 
-void write_to_file(FILE *datafile, Data *data) {
+void write_client_data_to_file(FILE *datafile, ClientData *data) {
 	if (datafile == NULL) {
 		puts("RECORDING ERROR");
 	} else {
@@ -16,7 +16,7 @@ void write_to_file(FILE *datafile, Data *data) {
 	}
 }
 
-int read_from_file(FILE *datafile, Data *data) {
+int read_client_data_from_file(FILE *datafile, ClientData *data) {
 	if (datafile == NULL) {
 		puts("READING ERROR");
 		return -1;

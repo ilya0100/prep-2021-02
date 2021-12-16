@@ -15,7 +15,7 @@ int main(void) {
 	while (scanf("%d", &choice) != -1) {
 		switch(choice) {
 			case DATA_WRITE:
-				write_data_to_file(RECORD_FILE);
+				write_input_to_file(RECORD_FILE);
 				break;
 			case TRANSACTION:
 				transaction_write(TRANSACTION_FILE);

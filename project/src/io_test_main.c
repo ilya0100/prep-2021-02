@@ -2,7 +2,7 @@
 
 int main() {
 	const char *filename = "test_file.dat";
-	Data expected_data = {
+	ClientData expected_data = {
     	.number = 1,
     	.name = "ivan",
     	.surname = "ivanov",
@@ -13,11 +13,11 @@ int main() {
     	.cash_payments = 35
     };
 	FILE *datafile = fopen(filename , "w");
-	write_to_file(datafile, &expected_data);
+	write_client_data_to_file(datafile, &expected_data);
 	fclose(datafile);
-	Data got_data = {0};
+	ClientData got_data = {0};
 	datafile = fopen(filename , "r");
-	read_from_file(datafile, &got_data);
+	read_client_data_from_file(datafile, &got_data);
 	fclose(datafile);
 	if (expected_data.number == got_data.number &&
 		!strcmp(expected_data.name, got_data.name) &&

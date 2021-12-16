@@ -14,6 +14,6 @@ typedef struct Data {
 	double indebtedness;
 	double credit_limit;
 	double cash_payments;
-} Data;
+} ClientData;
 
 #endif  // PROJECT_INCLUDE_UTILS_H_

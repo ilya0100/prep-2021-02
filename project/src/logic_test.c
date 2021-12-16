@@ -12,15 +12,15 @@
 	"8 Client cash payments: ")
 #define PRINT_INPUT_FIELD() printf("%s\n%s\n", "1 Number account: ", "2 Client cash payments: ")
 
-void write_data_to_file(const char *filename) {
-	Data client = {0};
+void write_input_to_file(const char *filename) {
+	ClientData client = {0};
 	FILE *fd_of_filename = fopen(filename, "r+");
 	if(fd_of_filename == NULL) {
 		puts("Not access");
 	} else {
 		PRINT_OUTPUT_MESSAGE();
-		while(read_from_file(stdin, &client) != -1) {
-			write_to_file(fd_of_filename, &client);
+		while(read_client_data_from_file(stdin, &client) != -1) {
+			write_client_data_to_file(fd_of_filename, &client);
 			PRINT_OUTPUT_MESSAGE();
 		}
 		fclose(fd_of_filename);
@@ -28,7 +28,7 @@ void write_data_to_file(const char *filename) {
 }
 
 void transaction_write(const char *filename) {
-	Data transfer = {0};
+	ClientData transfer = {0};
 	FILE *fd_of_filename = fopen(filename, "r+");
 	if(fd_of_filename == NULL) {
 		puts("Not access");
@@ -45,7 +45,7 @@ void transaction_write(const char *filename) {
 void write_transfer_to_file(const char *client_filename,
 	const char *transaction_filename,
 	const char *blackrecord_filename) {
-	Data client = {0}, transfer = {0};
+	ClientData client = {0}, transfer = {0};
 	FILE *fd_of_client_file = fopen(client_filename, "r");
 	FILE *fd_of_transaction_file = fopen(transaction_filename, "r");
 	FILE *fd_of_blackrecord = fopen(blackrecord_filename, "w");
@@ -67,13 +67,13 @@ void write_transfer_to_file(const char *client_filename,
 		fclose(fd_of_transaction_file);
 		return;
 	}
-	while (read_from_file(fd_of_client_file, &client) != -1) {
+	while (read_client_data_from_file(fd_of_client_file, &client) != -1) {
 		while (fscanf(fd_of_transaction_file, "%3d%6lf", &transfer.number, &transfer.cash_payments) != -1) {
 			if (client.number == transfer.number && transfer.cash_payments != 0) {
 				client.credit_limit += transfer.cash_payments;
 			}
 		}
-		write_to_file(fd_of_blackrecord, &client);
+		write_client_data_to_file(fd_of_blackrecord, &client);
 		rewind(fd_of_transaction_file);
 	}
 	fclose(fd_of_client_file);

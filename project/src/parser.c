@@ -1,11 +1,11 @@
 #include "parser.h"
 
 typedef enum {
-    L_STR,
     L_FROM,
     L_TO,
     L_DATE,
     L_CONTENT,
+    L_STR,
     L_DASH,
     L_NULL,
     L_COUNT,
@@ -34,9 +34,9 @@ string_t *create_string_t() {
     if (new_string == NULL) {
         return NULL;
     }
-    new_string->data = malloc(sizeof(char));
+    new_string->data = calloc(BUFFER_SIZE, sizeof(char));
     new_string->length = 0;
-    new_string->size = 0;
+    new_string->size = BUFFER_SIZE;
     return new_string;
 }
 
@@ -49,15 +49,15 @@ void free_string_t(string_t *str) {
     }
 }
 
-data_t *create_data() {
-    data_t *eml_data = malloc(sizeof(data_t));
+eml_data_t *create_data() {
+    eml_data_t *eml_data = malloc(sizeof(eml_data_t));
     if (eml_data == NULL) {
         return NULL;
     }
-    eml_data->from = calloc(1, sizeof(char));
-    eml_data->to = calloc(1, sizeof(char));
-    eml_data->date = calloc(1, sizeof(char));
-    eml_data->bound = calloc(1, sizeof(char));
+    eml_data->from = calloc(BUFFER_SIZE, sizeof(char));
+    eml_data->to = calloc(BUFFER_SIZE, sizeof(char));
+    eml_data->date = calloc(BUFFER_SIZE, sizeof(char));
+    eml_data->bound = calloc(BUFFER_SIZE, sizeof(char));
     eml_data->bound_size = 0;
     eml_data->bound_status = 0;
     eml_data->parts_count = 0;
@@ -69,7 +69,7 @@ data_t *create_data() {
     return eml_data;
 }
 
-void free_data(data_t *eml_data) {
+void free_data(eml_data_t *eml_data) {
     if (eml_data->from != NULL) {
         free(eml_data->from);
     }
@@ -87,7 +87,7 @@ void free_data(data_t *eml_data) {
     }
 }
 
-typedef int (*action_t)(FILE *eml_file, string_t *str, data_t *eml_data);
+typedef int (*action_t)(string_t *str, eml_data_t *eml_data);
 
 typedef struct {
     state_t state;
@@ -116,11 +116,28 @@ static string_t *get_string(FILE *eml_file) {
     if (eml_file == NULL) {
         return NULL;
     }
-    string_t *new_str = create_string_t();
-    if ((new_str->length = getline(&new_str->data, &new_str->size, eml_file)) == -1) {
-        free_string_t(new_str);
+    if (feof(eml_file)) {
         return NULL;
     }
+
+    string_t *new_str = create_string_t();
+    size_t k = 1;
+
+    while (1) {
+        char buffer[BUFFER_SIZE] = "";
+        if (fgets(buffer, BUFFER_SIZE, eml_file) == NULL) {
+            break;
+        }
+        new_str->size = BUFFER_SIZE * k;
+        new_str->data = realloc(new_str->data, new_str->size);
+        strncat(new_str->data, buffer, BUFFER_SIZE);
+
+        if (buffer[BUFFER_SIZE - 2] == '\0' || buffer[BUFFER_SIZE - 2] == '\n') {
+            break;
+        }
+        k++;
+    }
+    new_str->length = strlen(new_str->data);
     return new_str;
 }
 
@@ -131,6 +148,7 @@ static int read_multiline_header(FILE *eml_file, string_t *str) {
     while (1) {
         string_t *buffer = get_string(eml_file);
         if (buffer == NULL) {
+            free_string_t(buffer);
             break;
         }
         if (*buffer->data == ' ' || *buffer->data == '\t') {
@@ -142,6 +160,7 @@ static int read_multiline_header(FILE *eml_file, string_t *str) {
             if (fseek(eml_file, - buffer->length, SEEK_CUR)) {
                 perror("error");
             }
+            free_string_t(buffer);
             break;
         }
         free_string_t(buffer);
@@ -149,16 +168,14 @@ static int read_multiline_header(FILE *eml_file, string_t *str) {
     return 0;
 }
 
-static int get_from(FILE *eml_file, string_t *str, data_t *eml_data) {
-    if (str == NULL || eml_file == NULL) {
+static int get_from(string_t *str, eml_data_t *eml_data) {
+    if (str == NULL) {
         return -1;
     }
     if (*eml_data->from) {
         return 0;
     }
-    if (read_multiline_header(eml_file, str) == -1) {
-        return -1;
-    }
+
     size_t eml_size = str->size;
     eml_data->from = realloc(eml_data->from, eml_size);
     if (eml_data->from == NULL) {
@@ -171,16 +188,14 @@ static int get_from(FILE *eml_file, string_t *str, data_t *eml_data) {
     return 0;
 }
 
-static int get_to(FILE *eml_file, string_t *str, data_t *eml_data) {
-    if (str == NULL || eml_file == NULL) {
+static int get_to(string_t *str, eml_data_t *eml_data) {
+    if (str == NULL) {
         return -1;
     }
     if (*eml_data->to) {
         return 0;
     }
-    if (read_multiline_header(eml_file, str) == -1) {
-        return -1;
-    }
+
     size_t eml_size = str->size;
     eml_data->to = realloc(eml_data->to, eml_size);
     if (eml_data->to == NULL) {
@@ -193,16 +208,14 @@ static int get_to(FILE *eml_file, string_t *str, data_t *eml_data) {
     return 0;
 }
 
-static int get_date(FILE *eml_file, string_t *str, data_t *eml_data) {
-    if (str == NULL || eml_file == NULL) {
+static int get_date(string_t *str, eml_data_t *eml_data) {
+    if (str == NULL) {
         return -1;
     }
     if (*eml_data->date) {
         return 0;
     }
-    if (read_multiline_header(eml_file, str) == -1) {
-        return -1;
-    }
+
     size_t eml_size = str->size;
     eml_data->date = realloc(eml_data->date, eml_size);
     if (eml_data->date == NULL) {
@@ -215,11 +228,8 @@ static int get_date(FILE *eml_file, string_t *str, data_t *eml_data) {
     return 0;
 }
 
-static int get_bound(FILE *eml_file, string_t *str, data_t *eml_data) {
-    if (str == NULL || eml_file == NULL) {
-        return -1;
-    }
-    if (read_multiline_header(eml_file, str) == -1) {
+static int get_bound(string_t *str, eml_data_t *eml_data) {
+    if (str == NULL) {
         return -1;
     }
     if (eml_data->parts_count == 1 && eml_data->bound_size == 0) {
@@ -254,8 +264,8 @@ static int get_bound(FILE *eml_file, string_t *str, data_t *eml_data) {
     return 0;
 }
 
-static int comp_bound(FILE *eml_file, string_t *str, data_t *eml_data) {
-    if (str == NULL || eml_file == NULL) {
+static int comp_bound(string_t *str, eml_data_t *eml_data) {
+    if (str == NULL) {
         return -1;
     }
     if (eml_data->bound_size == 0) {
@@ -271,19 +281,19 @@ static int comp_bound(FILE *eml_file, string_t *str, data_t *eml_data) {
 }
 
 static rule_t syntax[S_COUNT][L_COUNT] = {
-//             L_STR            L_FROM                 L_TO                 L_DATE L_CONTENT L_DASH L_NULL
-/*S_BEGIN*/  {{S_TEXT, NULL},  {S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date},
-{S_BVALUE, get_bound}, {S_TEXT, NULL},  {S_END, NULL}},
-/*S_HEADER*/ {{S_TEXT, NULL},  {S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date},
-{S_BVALUE, get_bound}, {S_TEXT, NULL},  {S_END, NULL}},
-/*S_TEXT*/   {{S_TEXT, NULL},  {S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date},
-{S_BVALUE, get_bound}, {S_BOUND, comp_bound}, {S_END, NULL}},
-/*S_BVALUE*/ {{S_TEXT, NULL},  {S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date},
-{S_TEXT, NULL},        {S_TEXT, NULL},  {S_END, NULL}},
-/*S_BOUND*/  {{S_PARTS, NULL}, {S_PARTS, NULL},       {S_PARTS, NULL},     {S_PARTS, NULL},
-{S_PARTS, NULL},       {S_BOUND, comp_bound}, {S_END, NULL}},
-/*S_PARTS*/  {{S_PARTS, NULL}, {S_PARTS, NULL},       {S_PARTS, NULL},     {S_PARTS, NULL},
-{S_PARTS, NULL},       {S_BOUND, comp_bound}, {S_END, NULL}},
+//            L_FROM                 L_TO                 L_DATE               L_CONTENT L_STR L_DASH L_NULL
+/*S_BEGIN*/  {{S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date}, {S_BVALUE, get_bound},
+{S_TEXT, NULL}, {S_TEXT, NULL},  {S_END, NULL}},
+/*S_HEADER*/ {{S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date}, {S_BVALUE, get_bound},
+{S_TEXT, NULL}, {S_TEXT, NULL},  {S_END, NULL}},
+/*S_TEXT*/   {{S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date}, {S_BVALUE, get_bound},
+{S_TEXT, NULL}, {S_BOUND, comp_bound}, {S_END, NULL}},
+/*S_BVALUE*/ {{S_HEADER, get_from},  {S_HEADER, get_to},  {S_HEADER, get_date}, {S_TEXT, NULL},
+{S_TEXT, NULL}, {S_TEXT, NULL},  {S_END, NULL}},
+/*S_BOUND*/  {{S_PARTS, NULL},       {S_PARTS, NULL},     {S_PARTS, NULL},      {S_PARTS, NULL},
+{S_PARTS, NULL}, {S_BOUND, comp_bound}, {S_END, NULL}},
+/*S_PARTS*/  {{S_PARTS, NULL},       {S_PARTS, NULL},     {S_PARTS, NULL},      {S_PARTS, NULL},
+{S_PARTS, NULL}, {S_BOUND, comp_bound}, {S_END, NULL}},
 };
 
 static lexem_t get_lexem(const string_t *str) {
@@ -308,7 +318,7 @@ static lexem_t get_lexem(const string_t *str) {
     return L_STR;
 }
 
-int get_eml(const char *path_to_eml, data_t *eml_data) {
+int get_eml(const char *path_to_eml, eml_data_t *eml_data) {
     FILE *eml_file = fopen(path_to_eml, "r");
     if (eml_file == NULL) {
         return -1;
@@ -322,27 +332,38 @@ int get_eml(const char *path_to_eml, data_t *eml_data) {
         } else {
             lexem = get_lexem(str);
         }
-        if (lexem == L_ERR) {
-            free_string_t(str);
-            fclose(eml_file);
-            return -1;
-        }
-        rule_t rule = syntax[state][lexem];
-        if (rule.action != NULL) {
-            if (rule.action(eml_file, str, eml_data) == -1) {
+
+        if (lexem <= L_CONTENT) {
+            if (read_multiline_header(eml_file, str) == -1) {
                 free_string_t(str);
                 fclose(eml_file);
                 return -1;
             }
         }
-        if (eml_data->bound_status &&
-            strstr(str->data + eml_data->bound_size + sizeof ("--") - 1, "--")) {
+        if (lexem == L_ERR) {
+            free_string_t(str);
+            fclose(eml_file);
+            return -1;
+        }
+
+        rule_t rule = syntax[state][lexem];
+        if (rule.action != NULL) {
+            if (rule.action(str, eml_data) == -1) {
+                free_string_t(str);
+                fclose(eml_file);
+                return -1;
+            }
+        }
+        if (eml_data->bound_status && str != NULL &&
+            strstr(str->data + eml_data->bound_size + sizeof ("--") - 1, "--") != NULL) {
             eml_data->parts_count--;
             rule.state = S_END;
         } else {
             eml_data->bound_status = 0;
         }
+
         if (rule.state == S_END) {
+            free_string_t(str);
             fclose(eml_file);
             return 0;
         }

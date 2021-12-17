@@ -1,7 +1,7 @@
 #ifndef PROJECT_INCLUDE_PARSER_H_
 #define PROJECT_INCLUDE_PARSER_H_
 
-#define _GNU_SOURCE
+#define BUFFER_SIZE 250
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -18,11 +18,11 @@ typedef struct {
     size_t bound_size;
     int bound_status;
     size_t parts_count;
-} data_t;
+} eml_data_t;
 
-data_t *create_data();
-void free_data(data_t *eml_data);
+eml_data_t *create_data();
+void free_data(eml_data_t *eml_data);
 
-int get_eml(const char *path_to_eml, data_t *eml_data);
+int get_eml(const char *path_to_eml, eml_data_t *eml_data);
 
 #endif  // PROJECT_INCLUDE_PARSER_H_

@@ -5,8 +5,12 @@ int main(int argc, const char **argv) {
     if (argc != 2) {
         return -1;
     }
+
     const char *path_to_eml = argv[1];
     eml_data_t *eml_data = create_data();
+    if (eml_data == NULL) {
+        return -1;
+    }
 
     if (get_eml(path_to_eml, eml_data) == -1) {
         free_data(eml_data);

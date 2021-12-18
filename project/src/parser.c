@@ -1,35 +1,7 @@
 #include "parser.h"
 
-typedef enum {
-    L_FROM,
-    L_TO,
-    L_DATE,
-    L_CONTENT,
-    L_STR,
-    L_DASH,
-    L_NULL,
-    L_COUNT,
-    L_ERR
-} lexem_t;
 
-typedef enum {
-    S_BEGIN,
-    S_HEADER,
-    S_TEXT,
-    S_BVALUE,
-    S_BOUND,
-    S_PARTS,
-    S_END,
-    S_COUNT,
-} state_t;
-
-typedef struct {
-    char *data;
-    size_t size;
-    ssize_t length;
-} string_t;
-
-string_t *create_string_t() {
+static string_t *create_string_t() {
     string_t *new_string = malloc(sizeof(string_t));
     if (new_string == NULL) {
         return NULL;
@@ -40,7 +12,7 @@ string_t *create_string_t() {
     return new_string;
 }
 
-void free_string_t(string_t *str) {
+static void free_string_t(string_t *str) {
     if (str != NULL && str->data != NULL) {
         free(str->data);
     }
@@ -58,9 +30,11 @@ eml_data_t *create_data() {
     eml_data->to = calloc(BUFFER_SIZE, sizeof(char));
     eml_data->date = calloc(BUFFER_SIZE, sizeof(char));
     eml_data->bound = calloc(BUFFER_SIZE, sizeof(char));
+
     eml_data->bound_size = 0;
     eml_data->bound_status = 0;
     eml_data->parts_count = 0;
+
     if (eml_data->from == NULL || eml_data->to == NULL ||
         eml_data->date == NULL || eml_data->bound == NULL) {
         free_data(eml_data);
@@ -70,42 +44,62 @@ eml_data_t *create_data() {
 }
 
 void free_data(eml_data_t *eml_data) {
-    if (eml_data->from != NULL) {
-        free(eml_data->from);
-    }
-    if (eml_data->to != NULL) {
-        free(eml_data->to);
-    }
-    if (eml_data->date != NULL) {
-        free(eml_data->date);
-    }
-    if (eml_data->bound != NULL) {
-        free(eml_data->bound);
-    }
     if (eml_data != NULL) {
+        if (eml_data->from != NULL) {
+            free(eml_data->from);
+        }
+        if (eml_data->to != NULL) {
+            free(eml_data->to);
+        }
+        if (eml_data->date != NULL) {
+            free(eml_data->date);
+        }
+        if (eml_data->bound != NULL) {
+            free(eml_data->bound);
+        }
         free(eml_data);
     }
 }
 
-typedef int (*action_t)(string_t *str, eml_data_t *eml_data);
-
-typedef struct {
-    state_t state;
-    action_t action;
-} rule_t;
-
-static int copy_string_without_ws(char *data, string_t *str, size_t number_of_skips) {
-    if (data == NULL || str == NULL) {
+static int tolower_string_t(string_t *str) {
+    if (str == NULL) {
         return -1;
     }
+    for (size_t i = 0; i < str->length; i++) {
+        *(str->data + i) = tolower(*(str->data + i));
+    }
+    return 0;
+}
+
+static int string_t_cpy(string_t *dest, const string_t *src) {
+    if (dest == NULL || src == NULL) {
+        return -1;
+    }
+    dest->data = realloc(dest->data, src->size);
+    if (dest->data == NULL) {
+        return -1;
+    }
+
+    memcpy(dest->data, src->data, src->length);
+    dest->size = src->size;
+    dest->length = src->length;
+    return 0;
+}
+
+static int copy_string_without_ws(char *dest, const string_t *str, size_t number_of_skips) {
+    if (dest == NULL || str == NULL) {
+        return -1;
+    }
+
     char *buffer = str->data;
     if (isspace(*(buffer + number_of_skips))) {
         number_of_skips++;
     }
+
     size_t length = 0;
-    for (ssize_t i = number_of_skips; i <= str->length; ++i) {
+    for (size_t i = number_of_skips; i <= str->length; ++i) {
         if (buffer[i] != '\n' && buffer[i] != '\r' && buffer[i] != '\t') {
-            *(data + length) = buffer[i];
+            *(dest + length) = buffer[i];
             length++;
         }
     }
@@ -130,6 +124,10 @@ static string_t *get_string(FILE *eml_file) {
         }
         new_str->size = BUFFER_SIZE * k;
         new_str->data = realloc(new_str->data, new_str->size);
+        if (new_str->data == NULL) {
+            free_string_t(new_str);
+            return NULL;
+        }
         strncat(new_str->data, buffer, BUFFER_SIZE);
 
         if (buffer[BUFFER_SIZE - 2] == '\0' || buffer[BUFFER_SIZE - 2] == '\n') {
@@ -142,7 +140,7 @@ static string_t *get_string(FILE *eml_file) {
 }
 
 static int read_multiline_header(FILE *eml_file, string_t *str) {
-    if (str == NULL) {
+    if (str == NULL || eml_file == NULL) {
         return -1;
     }
     while (1) {
@@ -151,14 +149,20 @@ static int read_multiline_header(FILE *eml_file, string_t *str) {
             free_string_t(buffer);
             break;
         }
+
         if (*buffer->data == ' ' || *buffer->data == '\t') {
             str->size = str->size + buffer->size;
             str->length = str->length + buffer->length;
             str->data = realloc(str->data, str->size);
+
+            if (str->data == NULL) {
+                free_string_t(buffer);
+                return -1;
+            }
             strncat(str->data, buffer->data, buffer->length);
         } else {
             if (fseek(eml_file, - buffer->length, SEEK_CUR)) {
-                perror("error");
+                return -1;
             }
             free_string_t(buffer);
             break;
@@ -169,7 +173,7 @@ static int read_multiline_header(FILE *eml_file, string_t *str) {
 }
 
 static int get_from(string_t *str, eml_data_t *eml_data) {
-    if (str == NULL) {
+    if (str == NULL || eml_data == NULL) {
         return -1;
     }
     if (*eml_data->from) {
@@ -181,7 +185,7 @@ static int get_from(string_t *str, eml_data_t *eml_data) {
     if (eml_data->from == NULL) {
         return -1;
     }
-    if (copy_string_without_ws(eml_data->from, str, sizeof("From:") - 1) == -1) {
+    if (copy_string_without_ws(eml_data->from, str, sizeof(FROM) - 1) == -1) {
         free(eml_data->from);
         return -1;
     }
@@ -189,7 +193,7 @@ static int get_from(string_t *str, eml_data_t *eml_data) {
 }
 
 static int get_to(string_t *str, eml_data_t *eml_data) {
-    if (str == NULL) {
+    if (str == NULL || eml_data == NULL) {
         return -1;
     }
     if (*eml_data->to) {
@@ -201,7 +205,7 @@ static int get_to(string_t *str, eml_data_t *eml_data) {
     if (eml_data->to == NULL) {
         return -1;
     }
-    if (copy_string_without_ws(eml_data->to, str, sizeof("To:") - 1) == -1) {
+    if (copy_string_without_ws(eml_data->to, str, sizeof(TO) - 1) == -1) {
         free(eml_data->to);
         return -1;
     }
@@ -209,7 +213,7 @@ static int get_to(string_t *str, eml_data_t *eml_data) {
 }
 
 static int get_date(string_t *str, eml_data_t *eml_data) {
-    if (str == NULL) {
+    if (str == NULL || eml_data == NULL) {
         return -1;
     }
     if (*eml_data->date) {
@@ -221,7 +225,7 @@ static int get_date(string_t *str, eml_data_t *eml_data) {
     if (eml_data->date == NULL) {
         return -1;
     }
-    if (copy_string_without_ws(eml_data->date, str, sizeof("Date:") - 1) == -1) {
+    if (copy_string_without_ws(eml_data->date, str, sizeof(DATE) - 1) == -1) {
         free(eml_data->date);
         return -1;
     }
@@ -229,22 +233,32 @@ static int get_date(string_t *str, eml_data_t *eml_data) {
 }
 
 static int get_bound(string_t *str, eml_data_t *eml_data) {
-    if (str == NULL) {
+    if (str == NULL || eml_data == NULL) {
         return -1;
     }
     if (eml_data->parts_count == 1 && eml_data->bound_size == 0) {
         return 0;
     }
-    char *buffer = strstr(str->data, "boundary=");
-    if (buffer == NULL) {
-        buffer = strstr(str->data, "BOUNDARY=");
+
+    string_t *low_str = create_string_t();
+    if (string_t_cpy(low_str, str) == -1) {
+        free_string_t(low_str);
+        return -1;
     }
+    if (tolower_string_t(low_str) == -1) {
+        free_string_t(low_str);
+        return -1;
+    }
+
+    char *buffer = strstr(low_str->data, BOUNDARY);
     if (buffer == NULL || (*(buffer - 1) >= 'a' && *(buffer - 1) <= 'z')) {
         eml_data->parts_count = 1;
         eml_data->bound_size = 0;
+        free_string_t(low_str);
         return 0;
     }
-    buffer += sizeof("boundary=") - 1;
+
+    buffer = str->data + (buffer - low_str->data) + sizeof(BOUNDARY) - 1;
     if (*buffer == '"') {
         buffer++;
     }
@@ -256,16 +270,19 @@ static int get_bound(string_t *str, eml_data_t *eml_data) {
         bound_size++;
     }
     if (bound_size == 0) {
+        free_string_t(low_str);
         return -1;
     }
+
     eml_data->bound = realloc(eml_data->bound, bound_size * sizeof(char));
     memcpy(eml_data->bound, buffer, bound_size);
     eml_data->bound_size = bound_size;
+    free_string_t(low_str);
     return 0;
 }
 
 static int comp_bound(string_t *str, eml_data_t *eml_data) {
-    if (str == NULL) {
+    if (str == NULL || eml_data == NULL) {
         return -1;
     }
     if (eml_data->bound_size == 0) {
@@ -300,13 +317,13 @@ static lexem_t get_lexem(const string_t *str) {
     if (str == NULL) {
         return L_ERR;
     }
-    if (strstr(str->data, "From:") == str->data) {
+    if (strstr(str->data, FROM) == str->data) {
         return L_FROM;
     }
-    if (strstr(str->data, "To:") == str->data) {
+    if (strstr(str->data, TO) == str->data) {
         return L_TO;
     }
-    if (strstr(str->data, "Date:") == str->data) {
+    if (strstr(str->data, DATE) == str->data) {
         return L_DATE;
     }
     if (strstr(str->data, "Content-Type:") == str->data) {
@@ -319,10 +336,14 @@ static lexem_t get_lexem(const string_t *str) {
 }
 
 int get_eml(const char *path_to_eml, eml_data_t *eml_data) {
+    if (eml_data == NULL) {
+        return -1;
+    }
     FILE *eml_file = fopen(path_to_eml, "r");
     if (eml_file == NULL) {
         return -1;
     }
+
     state_t state = S_BEGIN;
     lexem_t lexem;
     while (1) {

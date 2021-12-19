@@ -14,7 +14,7 @@ TEST_SRCS = \
 
 all: clean check test memtest rectest
 
-$(TARGET): $(SRCS) 
+$(TARGET): $(SRCS)
 	$(CC) -Wpedantic -Wall -Wextra -Werror -I $(HDRS_DIR) -o $(TARGET) $(CFLAGS) $(SRCS)
 
 $(TEST_TARGET): $(TEST_SRCS) 
@@ -38,3 +38,4 @@ rectest: $(TEST_TARGET)
 
 clean:
 	rm -rf $(TARGET) $(TEST_TARGET) *.dat
+

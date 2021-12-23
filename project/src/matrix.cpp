@@ -4,12 +4,8 @@
 #define EPS 1e-7
 
 namespace prep {
-    Matrix::Matrix(size_t rows, size_t cols) {
-        rowsCount = rows;
-        colsCount = cols;
-        for (size_t i = 0; i < rowsCount * colsCount; i++) {
-            elements.push_back(0);
-        }
+    Matrix::Matrix(size_t rows, size_t cols): rowsCount(rows), colsCount(cols) {
+        elements.resize(rows * cols);
     }
 
     Matrix::Matrix(std::istream& is) {
@@ -22,10 +18,10 @@ namespace prep {
         for (size_t i = 0; i < rowsCount; i++) {
             for (size_t j = 0; j < colsCount; j++) {
                 is >> value;
-                elements.push_back(value);
                 if (!is) {
                     throw InvalidMatrixStream();
                 }
+                elements.push_back(value);
             }
         }
     }
@@ -68,26 +64,21 @@ namespace prep {
     }
 
     bool Matrix::operator!=(const Matrix& rhs) const {
-        if (rowsCount != rhs.rowsCount || colsCount != rhs.colsCount) {
-            return true;
-        }
-
-        for (size_t i = 0; i < rowsCount; i++) {
-            for (size_t j = 0; j < colsCount; j++) {
-                if (std::abs((*this)(i, j) - rhs(i, j)) > EPS) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return !(*this == rhs);
     }
 
     std::ostream& operator<<(std::ostream& os, const Matrix& matrix) {
         os << matrix.rowsCount << " " << matrix.colsCount << std::endl;
+        if (!os) {
+            throw InvalidMatrixStream();
+        }
 
         for (size_t i = 0; i < matrix.rowsCount; i++) {
             for (size_t j = 0; j < matrix.colsCount; j++) {
                 os << std::setprecision(std::numeric_limits<double>::max_digits10) << matrix(i, j);
+                if (!os) {
+                    throw InvalidMatrixStream();
+                }
                 if (j < matrix.colsCount - 1) {
                     os << " ";
                 }
@@ -166,13 +157,7 @@ namespace prep {
     }
 
     Matrix operator*(double val, const Matrix& matrix) {
-        Matrix result(matrix.rowsCount, matrix.colsCount);
-        for (size_t i = 0; i < result.rowsCount; i++) {
-            for (size_t j = 0; j < result.colsCount; j++) {
-                result(i, j) = matrix(i, j) * val;
-            }
-        }
-        return result;
+        return matrix * val;
     }
 
     double Matrix::det() const {
@@ -221,7 +206,7 @@ namespace prep {
             throw DimensionMismatch(*this);
         }
         double determinant = det();
-        if (determinant == 0) {
+        if (std::abs(determinant) < EPS) {
             throw SingularMatrix();
         }
         return adj() * (1 / determinant);
